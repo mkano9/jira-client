@@ -1,41 +1,43 @@
-*.pydevproject
-.metadata
-.gradle
-bin/
-tmp/
-*.tmp
-*.bak
-*.swp
-*~.nib
-local.properties
-.settings/
-.loadpath
+# built application files
+*.apk
+*.ap_
 
-# Eclipse Core
+# files for the dex VM
+*.dex
+
+# Java class files
+*.class
+
+# generated files
+bin/
+gen/
+out/
+build/
+
+# Local configuration file (sdk path, etc)
+local.properties
+
+# Eclipse project files
+.classpath
 .project
 
-# External tool builders
-.externalToolBuilders/
+# Windows thumbnail db
+.DS_Store
 
-# Locally stored "Eclipse launch configurations"
-*.launch
+# IDEA/Android Studio project files, because
+# the project can be imported from settings.gradle
+.idea
+*.iml
 
-# CDT-specific
-.cproject
+# Old-style IDEA project files
+*.ipr
+*.iws
 
-# JDT-specific (Eclipse Java Development Tools)
-.classpath
+# Local IDEA workspace
+.idea/workspace.xml
 
-# Java annotation processor (APT)
-.factorypath
+# Gradle cache
+.gradle
 
-# PDT-specific
-.buildpath
-
-# sbteclipse plugin
-.target
-
-# TeXlipse plugin
-.texlipse
-
-.DS_STORE
+# Sandbox stuff
+_sandbox
