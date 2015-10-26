@@ -8,4 +8,12 @@ public class SearchIssueResponse {
 
     @SerializedName("issues")
     private ArrayList<Issue> issues;
+
+    public ArrayList<Issue> getIssues() {
+        return issues;
+    }
+
+    public void setIssues(ArrayList<Issue> issues) {
+        this.issues = issues;
+    }
 }

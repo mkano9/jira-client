@@ -3,20 +3,30 @@ package com.migapro.jiraclient.ui;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import com.migapro.jiraclient.R;
 import com.migapro.jiraclient.Util.Util;
+import com.migapro.jiraclient.models.Issue;
 import com.migapro.jiraclient.models.SearchIssue;
 import com.migapro.jiraclient.models.SearchIssueResponse;
 import com.migapro.jiraclient.models.Worklog;
 import com.migapro.jiraclient.services.JiraService;
 import com.migapro.jiraclient.services.ServiceGenerator;
+import com.migapro.jiraclient.ui.adapters.IssueRecyclerAdapter;
 
+import java.util.ArrayList;
+
+import butterknife.Bind;
+import butterknife.ButterKnife;
 import retrofit.Call;
 import retrofit.Callback;
 import retrofit.Response;
@@ -24,12 +34,18 @@ import retrofit.Retrofit;
 
 public class IssuesActivity extends AppCompatActivity {
 
+    @Bind(R.id.toolbar) Toolbar toolbar;
+    @Bind(R.id.recyclerview) RecyclerView recyclerView;
+
+    private IssueRecyclerAdapter mAdapter;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_issues);
 
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        ButterKnife.bind(this);
+
         setSupportActionBar(toolbar);
 
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
@@ -45,7 +61,26 @@ public class IssuesActivity extends AppCompatActivity {
             }
         });
 
-        retrieveIssues();
+        mAdapter = new IssueRecyclerAdapter();
+        recyclerView.setLayoutManager(new LinearLayoutManager(this));
+        mAdapter = new IssueRecyclerAdapter();
+        recyclerView.setAdapter(mAdapter);
+
+        if (savedInstanceState == null) {
+            retrieveIssues();
+        }
+        else {
+            Gson gson = new Gson();
+            String issuesJson = savedInstanceState.getString("issues");
+            ArrayList<Issue> issues = gson.fromJson(issuesJson, new TypeToken<ArrayList<Issue>>() {}.getType());
+            if (issues == null || issues.isEmpty()) {
+                retrieveIssues();
+            }
+            else {
+                mAdapter.setData(issues);
+                mAdapter.notifyDataSetChanged();
+            }
+        }
     }
 
     private void retrieveIssues() {
@@ -62,6 +97,10 @@ public class IssuesActivity extends AppCompatActivity {
             @Override
             public void onResponse(Response<SearchIssueResponse> response, Retrofit retrofit) {
                 Log.d("JIRA", String.valueOf(response.isSuccess()));
+                if (response.isSuccess()) {
+                    mAdapter.setData(response.body().getIssues());
+                    mAdapter.notifyDataSetChanged();
+                }
             }
 
             @Override
@@ -87,6 +126,14 @@ public class IssuesActivity extends AppCompatActivity {
                 Log.d("JIRA", "fail");
             }
         });
+    }
+
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        Gson gson = new Gson();
+        String issuesJson = gson.toJson(mAdapter.getData());
+        outState.putString("issues", issuesJson);
     }
 
     @Override
