@@ -37,7 +37,7 @@ public class IssueRecyclerAdapter extends RecyclerView.Adapter<IssueRecyclerAdap
     }
 
     @Override
-    public void onBindViewHolder(ViewHolder holder, int position) {
+    public void onBindViewHolder(final ViewHolder holder, int position) {
         final Issue issue = mData.get(position);
 
         holder.keyTextView.setText(issue.getKey());
@@ -46,8 +46,24 @@ public class IssueRecyclerAdapter extends RecyclerView.Adapter<IssueRecyclerAdap
             @Override
             public void onClick(View v) {
                 if (mOnlickListener != null) {
-                    mOnlickListener.onClick(issue.getKey(), "5m");
+                    mOnlickListener.onClick(issue.getKey(), holder.timeSpent.getText().toString());
                 }
+            }
+        });
+        holder.timeSpentSeekbar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                holder.timeSpent.setText(progress + "m");
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+
             }
         });
     }
@@ -75,6 +91,7 @@ public class IssueRecyclerAdapter extends RecyclerView.Adapter<IssueRecyclerAdap
         @Bind(R.id.send_worklog) Button sendWorkLogButton;
         @Bind(R.id.summary) TextView summaryTextView;
         @Bind(R.id.timeSpent_seekbar) SeekBar timeSpentSeekbar;
+        @Bind(R.id.timeSpent) TextView timeSpent;
 
         public ViewHolder(View itemView) {
             super(itemView);
