@@ -1,6 +1,8 @@
 package com.migapro.jiraclient.ui;
 
 import android.app.ProgressDialog;
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AppCompatActivity;
@@ -24,10 +26,13 @@ import com.migapro.jiraclient.models.Worklog;
 import com.migapro.jiraclient.services.JiraService;
 import com.migapro.jiraclient.services.ServiceGenerator;
 import com.migapro.jiraclient.ui.adapters.IssueRecyclerAdapter;
+import com.migapro.jiraclient.ui.dialogs.FindIssueDialog;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashSet;
+import java.util.Set;
 
 import butterknife.Bind;
 import butterknife.ButterKnife;
@@ -36,12 +41,15 @@ import retrofit.Callback;
 import retrofit.Response;
 import retrofit.Retrofit;
 
-public class IssuesActivity extends AppCompatActivity implements IssueRecyclerAdapter.OnClickListener {
+public class IssuesActivity extends AppCompatActivity implements IssueRecyclerAdapter.OnClickListener,
+        FindIssueDialog.OnAddIssueSubmitListener {
 
     @Bind(R.id.toolbar) Toolbar toolbar;
     @Bind(R.id.recyclerview) RecyclerView recyclerView;
 
     private IssueRecyclerAdapter mAdapter;
+    private ArrayList<Issue> mIssues;
+    private Set<String> mIssueIds;
     private ProgressDialog mProgressDialog;
 
     @Override
@@ -57,7 +65,8 @@ public class IssuesActivity extends AppCompatActivity implements IssueRecyclerAd
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-
+                FindIssueDialog findIssueDialog = new FindIssueDialog();
+                findIssueDialog.show(getFragmentManager(), "fragment_add_issue");
             }
         });
 
@@ -68,14 +77,16 @@ public class IssuesActivity extends AppCompatActivity implements IssueRecyclerAd
         recyclerView.setAdapter(mAdapter);
 
         if (savedInstanceState == null) {
-            retrieveIssues();
+            initIssueIds();
+            retrieveIssues(generateJql());
         }
         else {
             Gson gson = new Gson();
             String issuesJson = savedInstanceState.getString("issues");
             ArrayList<Issue> issues = gson.fromJson(issuesJson, new TypeToken<ArrayList<Issue>>() {}.getType());
             if (issues == null || issues.isEmpty()) {
-                retrieveIssues();
+                initIssueIds();
+                retrieveIssues(generateJql());
             }
             else {
                 mAdapter.setData(issues);
@@ -84,11 +95,33 @@ public class IssuesActivity extends AppCompatActivity implements IssueRecyclerAd
         }
     }
 
-    private void retrieveIssues() {
+    private void initIssueIds() {
+        SharedPreferences sp = getPreferences(Context.MODE_PRIVATE);
+        mIssueIds = sp.getStringSet("issueIds", new HashSet<String>());
+    }
+
+    private String generateJql() {
+        StringBuilder stringBuilder = new StringBuilder();
+        stringBuilder.append("key in (");
+        int i = 0;
+        for (String issueId : mIssueIds) {
+            stringBuilder.append(issueId);
+            i++;
+            if (i != mIssueIds.size()) {
+                stringBuilder.append(", ");
+            }
+        }
+        stringBuilder.append(")");
+        return stringBuilder.toString();
+    }
+
+    private void retrieveIssues(String jql) {
+        showProgressDialog();
+
         SearchIssue request = new SearchIssue();
-        request.setJql("key in (key-1, key-2)");
+        request.setJql(jql);
         request.setStartAt(0);
-        request.setMaxResults(10);
+        request.setMaxResults(20);
 
         JiraService jiraService = ServiceGenerator.generateService();
         String basicAuth = Util.generateBase64Credentials();
@@ -99,7 +132,11 @@ public class IssuesActivity extends AppCompatActivity implements IssueRecyclerAd
             public void onResponse(Response<SearchIssueResponse> response, Retrofit retrofit) {
                 Log.d("JIRA", String.valueOf(response.isSuccess()));
                 if (response.isSuccess()) {
-                    mAdapter.setData(response.body().getIssues());
+                    mIssues = response.body().getIssues();
+                    if (mIssues == null) {
+                        mIssues = new ArrayList<Issue>();
+                    }
+                    mAdapter.setData(mIssues);
                     mAdapter.notifyDataSetChanged();
                 }
                 dismissProgressDialog();
@@ -117,8 +154,7 @@ public class IssuesActivity extends AppCompatActivity implements IssueRecyclerAd
     public void onClick(String issueId, String timeSpent) {
         Worklog request = new Worklog();
         request.setTimeSpent(timeSpent);
-        request.setComment("Executed from Android app");
-        //request.setStarted("2015-10-25T09:40:50.877-0500");
+        //request.setComment("Executed from Android app");
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
         Date today = new Date();
         request.setStarted(dateFormat.format(today));
@@ -194,5 +230,13 @@ public class IssuesActivity extends AppCompatActivity implements IssueRecyclerAd
         if (mProgressDialog != null && mProgressDialog.isShowing()) {
             mProgressDialog.dismiss();
         }
+    }
+
+    @Override
+    public void OnAddIssueSubmit(String issueId) {
+        SharedPreferences sp = getPreferences(Context.MODE_PRIVATE);
+        mIssueIds.add(issueId);
+        sp.edit().putStringSet("issueIds", mIssueIds).apply();
+        retrieveIssues(generateJql());
     }
 }
