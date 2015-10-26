@@ -50,22 +50,6 @@ public class IssueRecyclerAdapter extends RecyclerView.Adapter<IssueRecyclerAdap
                 }
             }
         });
-        holder.timeSpentSeekbar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-            @Override
-            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                holder.timeSpent.setText(progress + "m");
-            }
-
-            @Override
-            public void onStartTrackingTouch(SeekBar seekBar) {
-
-            }
-
-            @Override
-            public void onStopTrackingTouch(SeekBar seekBar) {
-
-            }
-        });
     }
 
     @Override
@@ -96,6 +80,32 @@ public class IssueRecyclerAdapter extends RecyclerView.Adapter<IssueRecyclerAdap
         public ViewHolder(View itemView) {
             super(itemView);
             ButterKnife.bind(this, itemView);
+
+            timeSpentSeekbar.setMax(300);
+            timeSpentSeekbar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+                @Override
+                public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                    timeSpent.setText(formatIntoJiraTime(progress));
+                }
+
+                @Override
+                public void onStartTrackingTouch(SeekBar seekBar) {
+                }
+
+                @Override
+                public void onStopTrackingTouch(SeekBar seekBar) {
+                }
+            });
         }
+
+        private String formatIntoJiraTime(int minutes) {
+            if (minutes < 60) {
+                return minutes + "m";
+            }
+            int hours = minutes / 60;
+            int minutesWithinHour = minutes % 60;
+            return hours + "h" + " " + minutesWithinHour + "m";
+        }
+
     }
 }
