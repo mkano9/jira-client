@@ -1,38 +1,55 @@
 package com.migapro.jiraclient.ui.adapters;
 
-import android.databinding.DataBindingUtil;
-import android.databinding.ViewDataBinding;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.SeekBar;
+import android.widget.TextView;
 
-import com.migapro.jiraclient.BR;
 import com.migapro.jiraclient.R;
 import com.migapro.jiraclient.models.Issue;
 
 import java.util.ArrayList;
 
-public class IssueRecyclerAdapter extends RecyclerView.Adapter<IssueRecyclerAdapter.BindingHolder> {
+import butterknife.Bind;
+import butterknife.ButterKnife;
 
+public class IssueRecyclerAdapter extends RecyclerView.Adapter<IssueRecyclerAdapter.ViewHolder> {
+
+    private OnClickListener mOnlickListener;
     private ArrayList<Issue> mData;
+
+    public interface OnClickListener {
+        void onClick(String issueId, String timeSpent);
+    }
 
     public IssueRecyclerAdapter() {
         mData = new ArrayList<>();
     }
 
     @Override
-    public BindingHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+    public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_issue, parent, false);
-        BindingHolder holder = new BindingHolder(v);
+        ViewHolder holder = new ViewHolder(v);
         return holder;
     }
 
     @Override
-    public void onBindViewHolder(BindingHolder holder, int position) {
-        Issue issue = mData.get(position);
-        holder.getBinding().setVariable(BR.issue, issue);
-        holder.getBinding().executePendingBindings();
+    public void onBindViewHolder(ViewHolder holder, int position) {
+        final Issue issue = mData.get(position);
+
+        holder.keyTextView.setText(issue.getKey());
+        holder.summaryTextView.setText(issue.getFields().getSummary());
+        holder.sendWorkLogButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (mOnlickListener != null) {
+                    mOnlickListener.onClick(issue.getKey(), "5m");
+                }
+            }
+        });
     }
 
     @Override
@@ -48,17 +65,20 @@ public class IssueRecyclerAdapter extends RecyclerView.Adapter<IssueRecyclerAdap
         mData = data;
     }
 
-    public static class BindingHolder extends RecyclerView.ViewHolder {
+    public void setOnClickListener(OnClickListener listener) {
+        mOnlickListener = listener;
+    }
 
-        private ViewDataBinding binding;
+    public class ViewHolder extends RecyclerView.ViewHolder {
 
-        public BindingHolder(View itemView) {
+        @Bind(R.id.key) TextView keyTextView;
+        @Bind(R.id.send_worklog) Button sendWorkLogButton;
+        @Bind(R.id.summary) TextView summaryTextView;
+        @Bind(R.id.timeSpent_seekbar) SeekBar timeSpentSeekbar;
+
+        public ViewHolder(View itemView) {
             super(itemView);
-            binding = DataBindingUtil.bind(itemView);
-        }
-
-        public ViewDataBinding getBinding() {
-            return binding;
+            ButterKnife.bind(this, itemView);
         }
     }
 }

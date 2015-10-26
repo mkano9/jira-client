@@ -1,5 +1,6 @@
 package com.migapro.jiraclient.ui;
 
+import android.app.ProgressDialog;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AppCompatActivity;
@@ -10,6 +11,7 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.Toast;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
@@ -23,7 +25,9 @@ import com.migapro.jiraclient.services.JiraService;
 import com.migapro.jiraclient.services.ServiceGenerator;
 import com.migapro.jiraclient.ui.adapters.IssueRecyclerAdapter;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 
 import butterknife.Bind;
 import butterknife.ButterKnife;
@@ -32,12 +36,13 @@ import retrofit.Callback;
 import retrofit.Response;
 import retrofit.Retrofit;
 
-public class IssuesActivity extends AppCompatActivity {
+public class IssuesActivity extends AppCompatActivity implements IssueRecyclerAdapter.OnClickListener {
 
     @Bind(R.id.toolbar) Toolbar toolbar;
     @Bind(R.id.recyclerview) RecyclerView recyclerView;
 
     private IssueRecyclerAdapter mAdapter;
+    private ProgressDialog mProgressDialog;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -52,18 +57,14 @@ public class IssuesActivity extends AppCompatActivity {
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Worklog request = new Worklog();
-                request.setTimeSpent("5m");
-                request.setComment("Executed from Android app");
-                request.setStarted("2015-10-25T09:40:50.877-0500");
 
-                addWorklog("key-1", request);
             }
         });
 
         mAdapter = new IssueRecyclerAdapter();
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         mAdapter = new IssueRecyclerAdapter();
+        mAdapter.setOnClickListener(this);
         recyclerView.setAdapter(mAdapter);
 
         if (savedInstanceState == null) {
@@ -101,16 +102,33 @@ public class IssuesActivity extends AppCompatActivity {
                     mAdapter.setData(response.body().getIssues());
                     mAdapter.notifyDataSetChanged();
                 }
+                dismissProgressDialog();
             }
 
             @Override
             public void onFailure(Throwable t) {
                 Log.d("JIRA", "fail");
+                dismissProgressDialog();
             }
         });
     }
 
+    @Override
+    public void onClick(String issueId, String timeSpent) {
+        Worklog request = new Worklog();
+        request.setTimeSpent(timeSpent);
+        request.setComment("Executed from Android app");
+        //request.setStarted("2015-10-25T09:40:50.877-0500");
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
+        Date today = new Date();
+        request.setStarted(dateFormat.format(today));
+
+        addWorklog(issueId, request);
+    }
+
     private void addWorklog(String key, Worklog request) {
+        showProgressDialog();
+
         JiraService jiraService = ServiceGenerator.generateService();
         String basicAuth = Util.generateBase64Credentials();
 
@@ -119,13 +137,23 @@ public class IssuesActivity extends AppCompatActivity {
             @Override
             public void onResponse(Response<Worklog> response, Retrofit retrofit) {
                 Log.d("JIRA", String.valueOf(response.isSuccess()));
+                dismissProgressDialog();
+                showWorklogToast(response.isSuccess());
             }
 
             @Override
             public void onFailure(Throwable t) {
                 Log.d("JIRA", "fail");
+                dismissProgressDialog();
+                showWorklogToast(false);
             }
         });
+    }
+
+    private void showWorklogToast(boolean isSuccess) {
+        Toast.makeText(this,
+                isSuccess ? "Successfully logged work" : "Failed to log work",
+                Toast.LENGTH_LONG).show();
     }
 
     @Override
@@ -151,5 +179,20 @@ public class IssuesActivity extends AppCompatActivity {
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    private void showProgressDialog() {
+        if (mProgressDialog == null) {
+            mProgressDialog = new ProgressDialog(this);
+            mProgressDialog.setMessage("Loading");
+            mProgressDialog.setCancelable(false);
+        }
+        mProgressDialog.show();
+    }
+
+    private void dismissProgressDialog() {
+        if (mProgressDialog != null && mProgressDialog.isShowing()) {
+            mProgressDialog.dismiss();
+        }
     }
 }

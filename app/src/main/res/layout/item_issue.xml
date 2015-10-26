@@ -1,46 +1,54 @@
 <?xml version="1.0" encoding="utf-8"?>
-<layout xmlns:android="http://schemas.android.com/apk/res/android">
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
 
-    <data>
-        <variable name="issue" type="com.migapro.jiraclient.models.Issue"/>
-    </data>
-
-    <LinearLayout
+    <android.support.v7.widget.CardView
+        xmlns:app="http://schemas.android.com/apk/res-auto"
+        android:id="@+id/card_view"
+        android:layout_gravity="center"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:orientation="vertical">
+        android:layout_margin="@dimen/margin_xsmall"
+        app:cardCornerRadius="4dp"
+        app:cardUseCompatPadding="true">
 
-        <android.support.v7.widget.CardView
-            xmlns:card_view="http://schemas.android.com/apk/res-auto"
-            android:id="@+id/card_view"
-            android:layout_gravity="center"
+        <RelativeLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:layout_margin="@dimen/margin_xsmall"
-            card_view:cardCornerRadius="4dp"
-            card_view:cardUseCompatPadding="true">
+            android:padding="@dimen/margin_xsmall">
 
-            <LinearLayout
+            <TextView
+                android:id="@+id/key"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="@dimen/margin_xxsmall" />
+
+            <Button
+                android:id="@+id/send_worklog"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentRight="true"
+                android:layout_marginBottom="@dimen/margin_xxsmall"
+                android:text="Log" />
+
+            <TextView
+                android:id="@+id/summary"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/key"
+                android:layout_marginBottom="@dimen/margin_xsmall" />
+
+            <SeekBar
+                android:id="@+id/timeSpent_seekbar"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:padding="@dimen/margin_xsmall"
-                android:orientation="vertical">
+                android:layout_height="wrap_content"
+                android:layout_below="@id/summary"/>
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="@dimen/margin_xxsmall"
-                    android:text="@{issue.key}" />
+        </RelativeLayout>
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="@dimen/margin_xsmall"
-                    android:text="@{issue.fields.summary}" />
+    </android.support.v7.widget.CardView>
 
-            </LinearLayout>
-
-        </android.support.v7.widget.CardView>
-
-    </LinearLayout>
-</layout>
+</LinearLayout>
