@@ -82,9 +82,12 @@ public class IssueRecyclerAdapter extends RecyclerView.Adapter<IssueRecyclerAdap
             ButterKnife.bind(this, itemView);
 
             timeSpentSeekbar.setMax(300);
+            timeSpentSeekbar.incrementProgressBy(5);
             timeSpentSeekbar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
                 @Override
                 public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                    progress = progress / 5;
+                    progress = progress * 5;
                     timeSpent.setText(formatIntoJiraTime(progress));
                 }
 
