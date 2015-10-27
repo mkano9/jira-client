@@ -51,6 +51,7 @@ public class IssuesActivity extends AppCompatActivity implements IssueRecyclerAd
     private ArrayList<Issue> mIssues;
     private Set<String> mIssueIds;
     private ProgressDialog mProgressDialog;
+    private boolean mIsLoading;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -58,6 +59,8 @@ public class IssuesActivity extends AppCompatActivity implements IssueRecyclerAd
         setContentView(R.layout.activity_issues);
 
         ButterKnife.bind(this);
+
+        initIssueIds();
 
         setSupportActionBar(toolbar);
 
@@ -77,7 +80,6 @@ public class IssuesActivity extends AppCompatActivity implements IssueRecyclerAd
         recyclerView.setAdapter(mAdapter);
 
         if (savedInstanceState == null) {
-            initIssueIds();
             retrieveIssues(generateJql());
         }
         else {
@@ -85,7 +87,6 @@ public class IssuesActivity extends AppCompatActivity implements IssueRecyclerAd
             String issuesJson = savedInstanceState.getString("issues");
             ArrayList<Issue> issues = gson.fromJson(issuesJson, new TypeToken<ArrayList<Issue>>() {}.getType());
             if (issues == null || issues.isEmpty()) {
-                initIssueIds();
                 retrieveIssues(generateJql());
             }
             else {
@@ -97,7 +98,8 @@ public class IssuesActivity extends AppCompatActivity implements IssueRecyclerAd
 
     private void initIssueIds() {
         SharedPreferences sp = getPreferences(Context.MODE_PRIVATE);
-        mIssueIds = sp.getStringSet("issueIds", new HashSet<String>());
+        //mIssueIds = sp.getStringSet("issueIds", new HashSet<String>());
+        mIssueIds = new HashSet<String>(sp.getStringSet("issueIds", new HashSet<String>()));
     }
 
     private String generateJql() {
@@ -198,6 +200,20 @@ public class IssuesActivity extends AppCompatActivity implements IssueRecyclerAd
         Gson gson = new Gson();
         String issuesJson = gson.toJson(mAdapter.getData());
         outState.putString("issues", issuesJson);
+        String issueIdsJson = gson.toJson(mIssueIds);
+        outState.putString("issueIds", issueIdsJson);
+
+        if (mIsLoading) {
+            dismissProgressDialog();
+        }
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        if (mIsLoading) {
+            showProgressDialog();
+        }
     }
 
     @Override
@@ -224,10 +240,12 @@ public class IssuesActivity extends AppCompatActivity implements IssueRecyclerAd
             mProgressDialog.setCancelable(false);
         }
         mProgressDialog.show();
+        mIsLoading = true;
     }
 
     private void dismissProgressDialog() {
         if (mProgressDialog != null && mProgressDialog.isShowing()) {
+            mIsLoading = false;
             mProgressDialog.dismiss();
         }
     }
